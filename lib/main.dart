@@ -100,7 +100,7 @@ class _PowerDemoPageState extends State<PowerDemoPage>
     setState(() {
       _products.addAll(
         List.generate(
-          10,
+          20,
           (index) => Product(
             id: _products.length + index + 1,
             name: 'Product ${_products.length + index + 1}',
