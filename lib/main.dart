@@ -7,116 +7,343 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Flutter Power Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const PowerDemoPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class PowerDemoPage extends StatefulWidget {
+  const PowerDemoPage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<PowerDemoPage> createState() => _PowerDemoPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _PowerDemoPageState extends State<PowerDemoPage>
+    with SingleTickerProviderStateMixin {
+  double _sliderValue = 0.5;
+  double _volume = 50.0;
+  bool _isSwitchOn = false;
+  late AnimationController _controller;
+  late Animation<Color?> _colorAnimation;
 
-  void _incrementCounter() {
+  final List<Product> _products = [];
+  final ScrollController _scrollController = ScrollController();
+  bool _isLoading = false;
+  int _page = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+
+    _colorAnimation = ColorTween(
+      begin: Colors.blue,
+      end: Colors.purple,
+    ).animate(_controller);
+
+    _loadProducts();
+
+    // Добавляем слушатель для бесконечного скролла
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels ==
+              _scrollController.position.maxScrollExtent &&
+          !_isLoading) {
+        _loadMoreProducts();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onSliderChanged(double value) {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _sliderValue = value;
+    });
+  }
+
+  void _onVolumeChanged(double value) {
+    setState(() {
+      _volume = value;
+    });
+  }
+
+  void _onSwitchChanged(bool value) {
+    setState(() {
+      _isSwitchOn = value;
+    });
+  }
+
+  // Загрузка продуктов (имитация)
+  Future<void> _loadProducts() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    await Future.delayed(const Duration(seconds: 2)); // Имитация задержки сети
+
+    setState(() {
+      _products.addAll(
+        List.generate(
+          10,
+          (index) => Product(
+            id: _products.length + index + 1,
+            name: 'Product ${_products.length + index + 1}',
+            price: 100 + index * 10,
+            imageUrl:
+                'https://manti-man.ru/wp-content/uploads/2023/08/new-sambuli-hinkal.webp',
+          ),
+        ),
+      );
+      _isLoading = false;
+    });
+  }
+
+  // Подгрузка дополнительных продуктов
+  Future<void> _loadMoreProducts() async {
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    await Future.delayed(const Duration(seconds: 2)); // Имитация задержки сети
+
+    setState(() {
+      _products.addAll(
+        List.generate(
+          10,
+          (index) => Product(
+            id: _products.length + index + 1,
+            name: 'Product ${_products.length + index + 1}',
+            price: 100 + index * 10,
+            imageUrl:
+                'https://manti-man.ru/wp-content/uploads/2023/08/new-sambuli-hinkal.webp',
+          ),
+        ),
+      );
+      _isLoading = false;
+      _page++;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('Flutter Power Demo'),
+        backgroundColor: Colors.black87,
+        elevation: 0,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+      body: SingleChildScrollView(
+        controller: _scrollController,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Анимированный контейнер
+              AnimatedBuilder(
+                animation: _colorAnimation,
+                builder: (context, child) {
+                  return Container(
+                    height: 200,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          _colorAnimation.value!,
+                          _colorAnimation.value!.withOpacity(0.5),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Flutter is Awesome!',
+                        style: TextStyle(
+                          fontSize: 24,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 20),
+
+              // Слайдер для настройки яркости
+              Text(
+                'Brightness: ${(_sliderValue * 100).toStringAsFixed(0)}%',
+                style: const TextStyle(fontSize: 18),
+              ),
+              Slider(
+                value: _sliderValue,
+                onChanged: _onSliderChanged,
+                min: 0.0,
+                max: 1.0,
+                divisions: 10,
+                label: '${(_sliderValue * 100).toStringAsFixed(0)}%',
+              ),
+
+              const SizedBox(height: 20),
+
+              // Слайдер для настройки громкости
+              Text(
+                'Volume: ${_volume.toStringAsFixed(0)}',
+                style: const TextStyle(fontSize: 18),
+              ),
+              Slider(
+                value: _volume,
+                onChanged: _onVolumeChanged,
+                min: 0.0,
+                max: 100.0,
+                divisions: 10,
+                label: _volume.toStringAsFixed(0),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Переключатель
+              Row(
+                children: [
+                  const Text('Enable Feature:', style: TextStyle(fontSize: 18)),
+                  const Spacer(),
+                  Switch(
+                    value: _isSwitchOn,
+                    onChanged: _onSwitchChanged,
+                    activeColor: Colors.deepPurple,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // Кнопка с анимацией
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _controller.repeat(reverse: true);
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
+                ),
+                child: const Text(
+                  'Restart Animation',
+                  style: TextStyle(fontSize: 18, color: Colors.white),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Список продуктов
+              const Text(
+                'Products:',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              ..._products
+                  .map((product) => ProductCard(product: product))
+                  .toList(),
+
+              // Индикатор загрузки
+              if (_isLoading)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class Product {
+  final int id;
+  final String name;
+  final double price;
+  final String imageUrl;
+
+  Product({
+    required this.id,
+    required this.name,
+    required this.price,
+    required this.imageUrl,
+  });
+}
+
+class ProductCard extends StatelessWidget {
+  final Product product;
+
+  const ProductCard({super.key, required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                product.imageUrl,
+                width: 100,
+                height: 100,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.name,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '\$${product.price.toStringAsFixed(2)}',
+                    style: const TextStyle(fontSize: 16, color: Colors.green),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
